@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:google_generative_ai/google_generative_ai.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
-void main() {
+Future<void> main() async {
+  await dotenv.load(fileName: ".env");
   runApp(const MyApp());
 }
 
@@ -33,12 +35,11 @@ class _SentimentAnalyzerState extends State<SentimentAnalyzer> {
   final TextEditingController _textController = TextEditingController();
   bool _isLoading = false;
 
-  // API key
-  final String apiKey = 'AIzaSyD-C0StV-RJLWVb6si3mVhPbtwVJ8OAR-w';
+  // API key từ file .env
+  final String apiKey = dotenv.env['GEMINI_API_KEY'] ?? 'YOUR_API_KEY_HERE';
 
-  // Màu sắc và emoji dựa trên cảm xúc
-  Color _backgroundColor = Colors.white; // Trạng thái ban đầu là trắng
-  String _emojiDisplay = '😐'; // Emoji trung tính
+  Color _backgroundColor = Colors.white;
+  String _emojiDisplay = '😐';
 
   @override
   void dispose() {
@@ -60,21 +61,16 @@ class _SentimentAnalyzerState extends State<SentimentAnalyzer> {
     });
 
     try {
-      // Khởi tạo model Gemini
       final model = GenerativeModel(
-        model: 'gemini-1.5-flash', // Sử dụng mô hình mới nhất
+        model: 'gemini-1.5-flash',
         apiKey: apiKey,
       );
 
-      // Tạo prompt yêu cầu phân tích sentiment
       final prompt =
           'Analyze the sentiment of this text and respond with only "positive", "negative", or "neutral": "$text"';
-
-      // Gửi yêu cầu đến API
       final content = [Content.text(prompt)];
       final response = await model.generateContent(content);
 
-      // Lấy kết quả
       final responseText = response.text?.toLowerCase() ?? 'neutral';
       if (responseText.isEmpty) {
         setState(() {
@@ -85,7 +81,6 @@ class _SentimentAnalyzerState extends State<SentimentAnalyzer> {
         return;
       }
 
-      // Phân tích kết quả
       if (responseText.contains('positive')) {
         setState(() {
           _backgroundColor = Colors.green;
@@ -94,7 +89,7 @@ class _SentimentAnalyzerState extends State<SentimentAnalyzer> {
         });
       } else if (responseText.contains('negative')) {
         setState(() {
-          _backgroundColor = const Color(0xFFB71C1C); // Đỏ đậm
+          _backgroundColor = const Color(0xFFB71C1C);
           _emojiDisplay = '😞';
           _isLoading = false;
         });
@@ -126,7 +121,6 @@ class _SentimentAnalyzerState extends State<SentimentAnalyzer> {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.start,
             children: <Widget>[
-              // Top bar with "Sentiment" text
               Container(
                 width: double.infinity,
                 padding: const EdgeInsets.symmetric(vertical: 16),
@@ -141,8 +135,6 @@ class _SentimentAnalyzerState extends State<SentimentAnalyzer> {
                   ),
                 ),
               ),
-
-              // Main content
               Expanded(
                 child: Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 20),
@@ -150,7 +142,6 @@ class _SentimentAnalyzerState extends State<SentimentAnalyzer> {
                     mainAxisAlignment: MainAxisAlignment.center,
                     crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
-                      // Text input field
                       Container(
                         decoration: BoxDecoration(
                           color: Colors.white,
@@ -178,10 +169,7 @@ class _SentimentAnalyzerState extends State<SentimentAnalyzer> {
                           ),
                         ),
                       ),
-
                       const SizedBox(height: 10),
-
-                      // Submit button
                       SizedBox(
                         width: double.infinity,
                         child: ElevatedButton(
@@ -204,10 +192,7 @@ class _SentimentAnalyzerState extends State<SentimentAnalyzer> {
                           ),
                         ),
                       ),
-
                       const SizedBox(height: 50),
-
-                      // Emoji display
                       _isLoading
                           ? CircularProgressIndicator(
                         color: _backgroundColor == Colors.green
